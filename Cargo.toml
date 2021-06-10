@@ -17,8 +17,6 @@ hex = "0.4"
 itertools = "0.10"
 libc = "0.2"
 nix = "0.20"
-# Update this when 0.5.3 is released
-#neli = "0.5.3"
-neli = { git = "https://github.com/jbaublitz/neli.git" }
+neli = "0.5.3"
 
 
