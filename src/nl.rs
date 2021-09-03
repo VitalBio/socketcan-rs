@@ -13,21 +13,18 @@
 use libc::{self, c_int, c_uint};
 use neli::{
     consts::{
-        nl::{NlmF, NlmFFlags, NlType},
+        nl::{NlType, NlmF, NlmFFlags},
         rtnl::{Arphrd, RtAddrFamily, Rtm},
         socket::NlFamily,
     },
     err::NlError,
-    nl::{Nlmsghdr, NlPayload},
+    nl::{NlPayload, Nlmsghdr},
     rtnl::Ifinfomsg,
-    types::RtBuffer,
     socket::*,
+    types::RtBuffer,
 };
 use nix::{self, net::if_::if_nametoindex};
-use std::{
-    result,
-    fmt::Debug,
-};
+use std::{fmt::Debug, result};
 
 /// A result for Netlink errors.
 type NlResult<T> = result::Result<T, NlError>;
@@ -74,7 +71,6 @@ impl CanInterface {
         Self::send_and_read_ack(&mut nl, hdr)
     }
 
-
     /// Sends a netlink message down a netlink socket, and checks if an ACK was
     /// properly received.
     fn send_and_read_ack<T, P>(sock: &mut NlSocketHandle, msg: Nlmsghdr<T, P>) -> NlResult<()>
@@ -95,11 +91,7 @@ impl CanInterface {
 
         // open and bind socket
         // groups is set to None(0), because we want no notifications
-        let sock = NlSocketHandle::connect(
-            NlFamily::Route,
-            Some(pid),
-            &[]
-        )?;
+        let sock = NlSocketHandle::connect(NlFamily::Route, Some(pid), &[])?;
         Ok(sock)
     }
 
@@ -107,12 +99,7 @@ impl CanInterface {
     ///
     /// Use a netlink control socket to set the interface status to "down".
     pub fn bring_down(&self) -> NlResult<()> {
-        let info = Ifinfomsg::down(
-            RtAddrFamily::Unspecified,
-            Arphrd::Netrom,
-            self.if_index as c_int,
-            RtBuffer::new()
-        );
+        let info = Ifinfomsg::down(RtAddrFamily::Unspecified, Arphrd::Netrom, self.if_index as c_int, RtBuffer::new());
         Self::send_info_msg(info)
     }
 
@@ -120,12 +107,7 @@ impl CanInterface {
     ///
     /// Brings the interface up by settings its "up" flag enabled via netlink.
     pub fn bring_up(&self) -> NlResult<()> {
-        let info = Ifinfomsg::up(
-            RtAddrFamily::Unspecified,
-            Arphrd::Netrom,
-            self.if_index as c_int,
-            RtBuffer::new()
-        );
+        let info = Ifinfomsg::up(RtAddrFamily::Unspecified, Arphrd::Netrom, self.if_index as c_int, RtBuffer::new());
         Self::send_info_msg(info)
     }
 }

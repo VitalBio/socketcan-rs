@@ -53,20 +53,15 @@ mod util;
 #[cfg(test)]
 mod tests;
 
-use libc::{c_int, c_short, c_void, c_uint, c_ulong, socket, SOCK_RAW, close, bind, sockaddr, read,
-           write, SOL_SOCKET, SO_RCVTIMEO, timespec, timeval, EINPROGRESS, SO_SNDTIMEO, time_t,
-           suseconds_t, fcntl, F_GETFL, F_SETFL, O_NONBLOCK};
 use itertools::Itertools;
+use libc::{
+    bind, c_int, c_short, c_uint, c_ulong, c_void, close, fcntl, read, sockaddr, socket, suseconds_t, time_t, timespec, timeval, write, EINPROGRESS, F_GETFL,
+    F_SETFL, O_NONBLOCK, SOCK_RAW, SOL_SOCKET, SO_RCVTIMEO, SO_SNDTIMEO,
+};
 use nix::net::if_::if_nametoindex;
 pub use nl::CanInterface;
-use std::{
-    error,
-    fmt,
-    io,
-    time,
-    mem::size_of,
-};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
+use std::{error, fmt, io, mem::size_of, time};
 use util::{set_socket_option, set_socket_option_mult};
 
 /// Check an error return value for timeouts.
@@ -126,7 +121,6 @@ const CAN_RAW_RECV_OWN_MSGS: c_int = 4;
 // const CAN_RAW_FD_FRAMES: c_int = 5;
 const CAN_RAW_JOIN_FILTERS: c_int = 6;
 
-
 // get timestamp in a struct timeval (us accuracy)
 // const SIOCGSTAMP: c_int = 0x8906;
 
@@ -150,7 +144,6 @@ pub const EFF_MASK: u32 = 0x1fffffff;
 
 /// valid bits in error frame
 pub const ERR_MASK: u32 = 0x1fffffff;
-
 
 /// an error mask that will cause SocketCAN to report all errors
 pub const ERR_MASK_ALL: u32 = ERR_MASK;
@@ -273,9 +266,7 @@ impl CanSocket {
         let bind_rv;
         unsafe {
             let sockaddr_ptr = &addr as *const CanAddr;
-            bind_rv = bind(sock_fd,
-                           sockaddr_ptr as *const sockaddr,
-                           size_of::<CanAddr>() as u32);
+            bind_rv = bind(sock_fd, sockaddr_ptr as *const sockaddr, size_of::<CanAddr>() as u32);
         }
 
         // FIXME: on fail, close socket (do not leak socketfds)
@@ -309,11 +300,7 @@ impl CanSocket {
             return Err(io::Error::last_os_error());
         }
 
-        let newfl = if nonblocking {
-            oldfl | O_NONBLOCK
-        } else {
-            oldfl & !O_NONBLOCK
-        };
+        let newfl = if nonblocking { oldfl | O_NONBLOCK } else { oldfl & !O_NONBLOCK };
 
         let rv = unsafe { fcntl(self.fd, F_SETFL, newfl) };
 
@@ -368,9 +355,7 @@ impl CanSocket {
         let frame = self.read_frame()?;
 
         let mut ts = timespec { tv_sec: 0, tv_nsec: 0 };
-        let rval = unsafe {
-            libc::ioctl(self.fd, SIOCGSTAMPNS as c_ulong, &mut ts as *mut timespec)
-        };
+        let rval = unsafe { libc::ioctl(self.fd, SIOCGSTAMPNS as c_ulong, &mut ts as *mut timespec) };
 
         if rval == -1 {
             return Err(io::Error::last_os_error());
@@ -536,7 +521,6 @@ impl CanFrame {
             _id |= EFF_FLAG;
         }
 
-
         if rtr {
             _id |= RTR_FLAG;
         }
@@ -553,13 +537,13 @@ impl CanFrame {
         }
 
         Ok(CanFrame {
-               _id: _id,
-               _data_len: data.len() as u8,
-               _pad: 0,
-               _res0: 0,
-               _res1: 0,
-               _data: full_data,
-           })
+            _id: _id,
+            _data_len: data.len() as u8,
+            _pad: 0,
+            _res0: 0,
+            _res1: 0,
+            _data: full_data,
+        })
     }
 
     /// Return the actual CAN ID (without EFF/RTR/ERR flags)
@@ -641,9 +625,6 @@ pub struct CanFilter {
 impl CanFilter {
     /// Construct a new CAN filter.
     pub fn new(id: u32, mask: u32) -> Result<CanFilter, ConstructionError> {
-        Ok(CanFilter {
-               _id: id,
-               _mask: mask,
-           })
+        Ok(CanFilter { _id: id, _mask: mask })
     }
 }

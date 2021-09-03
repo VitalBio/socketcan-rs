@@ -12,14 +12,12 @@
 //! Can be parsed by a `Reader` object. The API is inspired by the
 //! [csv](https://crates.io/crates/csv) crate.
 
-use std::{fs, io, path};
 use hex::FromHex;
+use std::{fs, io, path};
 
 // cannot be generic, because from_str_radix is not part of any Trait
 fn parse_raw(bytes: &[u8], radix: u32) -> Option<u64> {
-    ::std::str::from_utf8(bytes)
-        .ok()
-        .and_then(|s| u64::from_str_radix(s, radix).ok())
+    ::std::str::from_utf8(bytes).ok().and_then(|s| u64::from_str_radix(s, radix).ok())
 }
 
 #[derive(Debug)]
@@ -109,9 +107,7 @@ impl<R: io::BufRead> Reader<R> {
         let inner = &f[1..f.len() - 1];
 
         // split at dot, read both parts
-        let dot = inner.iter()
-            .position(|&c| c == b'.')
-            .ok_or(ParseError::InvalidTimestamp)?;
+        let dot = inner.iter().position(|&c| c == b'.').ok_or(ParseError::InvalidTimestamp)?;
 
         let (num, mant) = inner.split_at(dot);
 
@@ -126,12 +122,9 @@ impl<R: io::BufRead> Reader<R> {
         let device = ::std::str::from_utf8(f).map_err(|_| ParseError::InvalidDeviceName)?;
 
         // parse packet
-        let can_raw = field_iter.next()
-            .ok_or(ParseError::UnexpectedEndOfLine)?;
+        let can_raw = field_iter.next().ok_or(ParseError::UnexpectedEndOfLine)?;
 
-        let sep_idx = can_raw.iter()
-            .position(|&c| c == b'#')
-            .ok_or(ParseError::InvalidCanFrame)?;
+        let sep_idx = can_raw.iter().position(|&c| c == b'#').ok_or(ParseError::InvalidCanFrame)?;
         let (can_id, mut can_data) = can_raw.split_at(sep_idx);
 
         // cut of linefeed and skip seperator
@@ -147,16 +140,13 @@ impl<R: io::BufRead> Reader<R> {
         } else {
             Vec::from_hex(&can_data).map_err(|_| ParseError::InvalidCanFrame)?
         };
-        let frame = super::CanFrame::new((parse_raw(can_id, 16)
-                                                  .ok_or
-
-
-                                                  (ParseError::InvalidCanFrame))?
-                                              as u32,
-                                              &data,
-                                              rtr,
-                                              // FIXME: how are error frames saved?
-                                              false)?;
+        let frame = super::CanFrame::new(
+            (parse_raw(can_id, 16).ok_or(ParseError::InvalidCanFrame))? as u32,
+            &data,
+            rtr,
+            // FIXME: how are error frames saved?
+            false,
+        )?;
 
         Ok(Some(CanDumpRecord {
             t_us: t_us,
@@ -215,6 +205,4 @@ mod test {
 
         assert!(reader.next_record().unwrap().is_none());
     }
-
-
 }

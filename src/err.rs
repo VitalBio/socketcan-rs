@@ -2,22 +2,14 @@
 //                  /include/uapi/linux/can/error.h
 
 use super::CanFrame;
-use std::{
-    convert::TryFrom,
-    error,
-    fmt,
-};
-
+use std::{convert::TryFrom, error, fmt};
 
 #[inline]
 /// Helper function to retrieve a specific byte of frame data or returning an
 /// `Err(..)` otherwise.
 fn get_data(frame: &CanFrame, idx: u8) -> Result<u8, CanErrorDecodingFailure> {
-    Ok(*(frame.data()
-        .get(idx as usize)
-        .ok_or_else(|| CanErrorDecodingFailure::NotEnoughData(idx)))?)
+    Ok(*(frame.data().get(idx as usize).ok_or_else(|| CanErrorDecodingFailure::NotEnoughData(idx)))?)
 }
-
 
 /// Error decoding a CanError from a CanFrame.
 #[derive(Copy, Clone, Debug)]
@@ -64,7 +56,6 @@ impl fmt::Display for CanErrorDecodingFailure {
     }
 }
 
-
 #[derive(Copy, Clone, Debug)]
 pub enum CanError {
     /// TX timeout (by netdevice driver)
@@ -79,10 +70,7 @@ pub enum CanError {
 
     /// Protocol violation at the specified `Location`. See `ProtocolViolation`
     /// for details.
-    ProtocolViolation {
-        vtype: ViolationType,
-        location: Location,
-    },
+    ProtocolViolation { vtype: ViolationType, location: Location },
 
     /// Transceiver Error.
     TransceiverError,
@@ -123,7 +111,6 @@ impl fmt::Display for CanError {
         }
     }
 }
-
 
 #[derive(Copy, Clone, Debug)]
 pub enum ControllerProblem {
@@ -421,16 +408,12 @@ impl CanError {
         match frame.err() {
             0x00000001 => Ok(CanError::TransmitTimeout),
             0x00000002 => Ok(CanError::LostArbitration(get_data(frame, 0)?)),
-            0x00000004 => {
-                Ok(CanError::ControllerProblem(ControllerProblem::try_from(get_data(frame, 1)?)?))
-            }
+            0x00000004 => Ok(CanError::ControllerProblem(ControllerProblem::try_from(get_data(frame, 1)?)?)),
 
-            0x00000008 => {
-                Ok(CanError::ProtocolViolation {
-                    vtype: ViolationType::try_from(get_data(frame, 2)?)?,
-                    location: Location::try_from(get_data(frame, 3)?)?,
-                })
-            }
+            0x00000008 => Ok(CanError::ProtocolViolation {
+                vtype: ViolationType::try_from(get_data(frame, 2)?)?,
+                location: Location::try_from(get_data(frame, 3)?)?,
+            }),
 
             0x00000010 => Ok(CanError::TransceiverError),
             0x00000020 => Ok(CanError::NoAck),
@@ -458,4 +441,3 @@ impl ControllerSpecificErrorInformation for CanFrame {
         }
     }
 }
-
